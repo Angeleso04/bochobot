@@ -1,0 +1,91 @@
+let theWorld;
+let BochoAmarillo;
+
+// Load the image.
+function preload() {
+  theWorld = loadImage("/assets/track.png");
+}
+
+function setup() {
+  // Set the canvas the width and height
+  createCanvas(640, 480);
+  frameRate(30);
+
+  // Draw the image and scale it to cover the canvas.
+  image(theWorld, 0, 0);
+  
+  BochoAmarillo = new BochoBot(125, 220, 90, 50, theWorld);
+}
+
+function draw() {
+  // Draw the image and scale it to cover the canvas.
+  image(theWorld, 0, 0);
+  
+  BochoAmarillo.move();
+  BochoAmarillo.draw();
+}
+
+class BochoBot {
+  constructor(x, y, angle, size, world) {
+    this.x = x;
+    this.y = y;
+    this.angle = angle * PI / 180.0;
+    this.radius = size;
+    this.size_sensor = this.radius / 5;
+    this.world = world;
+    this.step_size = 2; 
+    this.step_angle = PI / 18;
+  }
+  
+  draw() {
+    push();
+    translate(this.x, this.y);
+    rotate(this.angle);
+    noStroke();
+    fill(236, 189, 64);
+    circle(0, 0, this.radius);
+    pop();
+  }
+  
+  move() {
+    let status_sensor = this.read_sensors();
+    
+    if (status_sensor[0] == 0 && status_sensor[1] == 0) {
+      this.move_forward();
+    } else if (status_sensor[0] == 0) {
+      this.rotate_left();
+    } else if (status_sensor[1] == 0) {
+      this.rotate_right();
+    } else {
+      this.move_forward();
+    }
+  }
+  
+  move_forward() {
+    this.x += this.step_size * cos(this.angle);
+    this.y += this.step_size * sin(this.angle);
+  }
+  
+  rotate_left() {
+    this.angle -= this.step_angle;
+  }
+  
+  rotate_right() {
+    this.angle += this.step_angle;
+  }
+  
+  read_sensors() {
+    let left_sensor = createVector(this.radius / 4, -this.radius / 4);
+    left_sensor.rotate(this.angle);
+    let right_sensor = createVector(this.radius / 4, this.radius / 4);
+    right_sensor.rotate(this.angle);
+    
+    let left_color = this.world.get(this.x + left_sensor.x, this.y + left_sensor.y);
+    let right_color = this.world.get(this.x + right_sensor.x, this.y + right_sensor.y);
+    
+    let left_status = (red(left_color) < 128 && green(left_color) < 128 && blue(left_color) < 128) ? 0 : 1;
+    let right_status = (red(right_color) < 128 && green(right_color) < 128 && blue(right_color) < 128) ? 0 : 1;
+    
+    return [left_status, right_status];
+  }
+}
